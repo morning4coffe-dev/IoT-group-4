@@ -9,14 +9,18 @@ CREATE TABLE IF NOT EXISTS measurement (
   location      TEXT          NOT NULL,
   temperature_c NUMERIC(6,2)  NOT NULL,
   humidity_pct  NUMERIC(5,2)  NOT NULL,
+  battery_pct   NUMERIC(5,2),
   wifi_rssi     INTEGER,
   uptime_s      BIGINT,
+  archived      BOOLEAN       NOT NULL DEFAULT FALSE,
+  archived_cts  TIMESTAMPTZ,
   sys_cts       TIMESTAMPTZ   NOT NULL DEFAULT NOW()
 );
 
 -- Index for common query patterns
 CREATE INDEX IF NOT EXISTS idx_measurement_device   ON measurement (device);
 CREATE INDEX IF NOT EXISTS idx_measurement_sys_cts  ON measurement (sys_cts DESC);
+CREATE INDEX IF NOT EXISTS idx_measurement_archived ON measurement (archived);
 
 -- Row-level security (adjust policies to your auth setup)
 ALTER TABLE measurement ENABLE ROW LEVEL SECURITY;

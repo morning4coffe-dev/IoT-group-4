@@ -43,7 +43,7 @@ async function get(filter) {
 
 /**
  * Returns a paginated list of measurements with optional filters.
- * @param {object} filters - { device_id?, dateFrom?, dateTo? }
+ * @param {object} filters - { device_id?, dateFrom?, dateTo?, includeArchived? }
  * @param {object} pageInfo - { pageIndex, pageSize }
  * @returns {{ itemList: object[], pageInfo: object }}
  */
@@ -67,6 +67,10 @@ async function list(filters = {}, pageInfo = {}) {
     query = query.lte("sys_cts", filters.dateTo);
   }
 
+  if (!filters.includeArchived) {
+    query = query.eq("archived", false);
+  }
+
   query = query.order("sys_cts", { ascending: false }).range(from, to);
 
   const { data, error, count } = await query;
@@ -84,13 +88,20 @@ async function list(filters = {}, pageInfo = {}) {
 }
 
 /**
- * Deletes a measurement record by id.
+ * Archives a measurement record by id (soft-delete).
  * @param {string} id - The measurement UUID.
+ * @returns {object} The updated measurement record.
  */
-async function deleteById(id) {
-  const { error } = await supabase.from(TABLE).delete().eq("id", id);
+async function archiveById(id) {
+  const { data, error } = await supabase
+    .from(TABLE)
+    .update({ archived: true, archived_cts: new Date().toISOString() })
+    .eq("id", id)
+    .select()
+    .single();
 
-  if (error) throw new Error(`DB delete failed: ${error.message}`);
+  if (error) throw new Error(`DB archive failed: ${error.message}`);
+  return data;
 }
 
-module.exports = { create, get, list, deleteById };
+module.exports = { create, get, list, archiveById };

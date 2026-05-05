@@ -41,13 +41,35 @@
               <button type="button" class="range-button" data-range="30d">30d</button>
             </div>
           </div>
-          <div class="chart-wrap">
-            <canvas id="historyChart" aria-label="Temperature and humidity historical chart"></canvas>
-          </div>
-          <div class="legend" aria-hidden="true">
-            <span><i class="legend-temp"></i>Temperature (C)</span>
-            <span><i class="legend-humidity"></i>Humidity (%)</span>
-            <span><i class="legend-range"></i>Optimal range</span>
+
+          <div class="chart-grid">
+            <article class="chart-card" aria-labelledby="temperatureChartTitle">
+              <div class="chart-card-heading">
+                <h3 id="temperatureChartTitle">Temperature</h3>
+                <span>Optimal 18-28&deg;C</span>
+              </div>
+              <div class="chart-wrap">
+                <canvas id="temperatureChart" aria-label="Temperature historical chart"></canvas>
+              </div>
+              <div class="legend" aria-hidden="true">
+                <span><i class="legend-temp"></i>Temperature (&deg;C)</span>
+                <span><i class="legend-range"></i>Optimal range</span>
+              </div>
+            </article>
+
+            <article class="chart-card" aria-labelledby="humidityChartTitle">
+              <div class="chart-card-heading">
+                <h3 id="humidityChartTitle">Humidity</h3>
+                <span>Optimal 50-80%</span>
+              </div>
+              <div class="chart-wrap">
+                <canvas id="humidityChart" aria-label="Humidity historical chart"></canvas>
+              </div>
+              <div class="legend" aria-hidden="true">
+                <span><i class="legend-humidity"></i>Humidity (%)</span>
+                <span><i class="legend-range"></i>Optimal range</span>
+              </div>
+            </article>
           </div>
         </section>
 

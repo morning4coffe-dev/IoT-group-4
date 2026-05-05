@@ -3,7 +3,7 @@ import { OPTIMAL_RANGES, fetchReadings } from "./data.js";
 const state = {
   readings: [],
   range: "24h",
-  chart: null,
+  charts: [],
 };
 
 const rangeHours = {
@@ -176,16 +176,29 @@ function renderReadings(tableId, readings) {
 }
 
 function setupChart() {
-  const canvas = document.getElementById("historyChart");
-  const context = canvas.getContext("2d");
-  state.chart = { canvas, context };
+  state.charts = [
+    {
+      canvas: document.getElementById("temperatureChart"),
+      key: "temperature_c",
+      label: "Temperature (C)",
+      color: "#ff7500",
+      range: OPTIMAL_RANGES.temperature,
+    },
+    {
+      canvas: document.getElementById("humidityChart"),
+      key: "humidity_pct",
+      label: "Humidity (%)",
+      color: "#2079ff",
+      range: OPTIMAL_RANGES.humidity,
+    },
+  ].map((chart) => ({ ...chart, context: chart.canvas.getContext("2d") }));
 
   const resizeObserver = new ResizeObserver(() => drawChart());
-  resizeObserver.observe(canvas.parentElement);
+  state.charts.forEach((chart) => resizeObserver.observe(chart.canvas.parentElement));
 }
 
-function setCanvasSize() {
-  const { canvas } = state.chart;
+function setCanvasSize(chart) {
+  const { canvas } = chart;
   const rect = canvas.parentElement.getBoundingClientRect();
   const ratio = window.devicePixelRatio || 1;
 
@@ -193,23 +206,28 @@ function setCanvasSize() {
   canvas.height = Math.floor(rect.height * ratio);
   canvas.style.width = `${rect.width}px`;
   canvas.style.height = `${rect.height}px`;
-  state.chart.context.setTransform(ratio, 0, 0, ratio, 0, 0);
+  chart.context.setTransform(ratio, 0, 0, ratio, 0, 0);
 
   return { width: rect.width, height: rect.height };
 }
 
 function drawChart() {
-  if (!state.chart) return;
+  if (!state.charts.length) return;
 
   const readings = getFilteredReadings();
-  const { context } = state.chart;
-  const { width, height } = setCanvasSize();
+  state.charts.forEach((chart) => drawSingleChart(chart, readings));
+}
+
+function drawSingleChart(chart, readings) {
+  const { context } = chart;
+  const { width, height } = setCanvasSize(chart);
   const padding = getChartPadding(width);
   const plotWidth = width - padding.left - padding.right;
   const plotHeight = height - padding.top - padding.bottom;
+  const maxValue = chart.key === "temperature_c" ? 40 : 100;
 
   context.clearRect(0, 0, width, height);
-  drawGrid(context, padding, plotWidth, plotHeight);
+  drawGrid(context, padding, plotWidth, plotHeight, maxValue);
 
   if (readings.length < 2) {
     drawEmptyChart(context, width, height);
@@ -217,12 +235,11 @@ function drawChart() {
   }
 
   const scaleX = (index) => padding.left + (index / (readings.length - 1)) * plotWidth;
-  const scaleY = (value) => padding.top + (1 - value / 100) * plotHeight;
+  const scaleY = (value) => padding.top + (1 - value / maxValue) * plotHeight;
 
-  drawOptimalLines(context, padding, plotWidth, scaleY);
-  drawSeries(context, readings, "humidity_pct", "#2079ff", scaleX, scaleY);
-  drawSeries(context, readings, "temperature_c", "#ff7500", scaleX, scaleY);
-  drawAxesLabels(context, readings, padding, plotWidth, plotHeight, scaleX);
+  drawOptimalLines(context, padding, plotWidth, scaleY, chart.range);
+  drawSeries(context, readings, chart.key, chart.color, scaleX, scaleY);
+  drawAxesLabels(context, readings, padding, plotWidth, plotHeight, scaleX, chart.label);
 }
 
 function getChartPadding(width) {
@@ -231,15 +248,17 @@ function getChartPadding(width) {
     : { top: 22, right: 34, bottom: 54, left: 64 };
 }
 
-function drawGrid(context, padding, plotWidth, plotHeight) {
+function drawGrid(context, padding, plotWidth, plotHeight, maxValue) {
   context.save();
   context.strokeStyle = getCssVar("--line");
   context.fillStyle = getCssVar("--muted");
   context.lineWidth = 1;
   context.font = "12px Inter, system-ui, sans-serif";
 
-  [0, 25, 50, 75, 100].forEach((tick) => {
-    const y = padding.top + (1 - tick / 100) * plotHeight;
+  const ticks = maxValue === 40 ? [0, 10, 20, 30, 40] : [0, 25, 50, 75, 100];
+
+  ticks.forEach((tick) => {
+    const y = padding.top + (1 - tick / maxValue) * plotHeight;
     context.beginPath();
     context.moveTo(padding.left, y);
     context.lineTo(padding.left + plotWidth, y);
@@ -250,20 +269,18 @@ function drawGrid(context, padding, plotWidth, plotHeight) {
   context.restore();
 }
 
-function drawOptimalLines(context, padding, plotWidth, scaleY) {
+function drawOptimalLines(context, padding, plotWidth, scaleY, range) {
   context.save();
   context.strokeStyle = "rgba(255, 88, 88, .85)";
   context.setLineDash([6, 5]);
   context.lineWidth = 1;
 
-  [OPTIMAL_RANGES.temperature.min, OPTIMAL_RANGES.temperature.max, OPTIMAL_RANGES.humidity.min, OPTIMAL_RANGES.humidity.max]
-    .filter((value, index, values) => values.indexOf(value) === index)
-    .forEach((value) => {
-      context.beginPath();
-      context.moveTo(padding.left, scaleY(value));
-      context.lineTo(padding.left + plotWidth, scaleY(value));
-      context.stroke();
-    });
+  [range.min, range.max].forEach((value) => {
+    context.beginPath();
+    context.moveTo(padding.left, scaleY(value));
+    context.lineTo(padding.left + plotWidth, scaleY(value));
+    context.stroke();
+  });
 
   context.restore();
 }
@@ -287,7 +304,7 @@ function drawSeries(context, readings, key, color, scaleX, scaleY) {
   context.restore();
 }
 
-function drawAxesLabels(context, readings, padding, plotWidth, plotHeight, scaleX) {
+function drawAxesLabels(context, readings, padding, plotWidth, plotHeight, scaleX, yAxisLabel) {
   context.save();
   context.fillStyle = getCssVar("--muted");
   context.font = "12px Inter, system-ui, sans-serif";
@@ -305,7 +322,7 @@ function drawAxesLabels(context, readings, padding, plotWidth, plotHeight, scale
   context.translate(14, padding.top + plotHeight / 2);
   context.rotate(-Math.PI / 2);
   context.textAlign = "center";
-  context.fillText("Temperature (C) / Humidity (%)", 0, 0);
+  context.fillText(yAxisLabel, 0, 0);
   context.restore();
 
   context.restore();

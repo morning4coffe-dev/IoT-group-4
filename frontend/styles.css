@@ -335,12 +335,46 @@ h2 {
   color: #fff;
 }
 
-.chart-wrap {
-  height: 390px;
-  min-height: 300px;
+.chart-grid {
+  display: grid;
+  gap: 22px;
 }
 
-#historyChart {
+.chart-card {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-soft);
+}
+
+.chart-card-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.chart-card-heading h3 {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.chart-card-heading span {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.chart-wrap {
+  height: 300px;
+  min-height: 260px;
+}
+
+#temperatureChart,
+#humidityChart {
   display: block;
 }
 
@@ -508,6 +542,12 @@ tbody tr:last-child td {
   }
 
   .chart-wrap {
-    height: 330px;
+    height: 280px;
+  }
+
+  .chart-card-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
   }
 }

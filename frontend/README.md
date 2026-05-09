@@ -1,6 +1,6 @@
 # Greenhouse Monitor Frontend
 
-Frontend for the HumiGrow greenhouse monitor dashboard.
+React frontend for the HumiGrow greenhouse monitor dashboard.
 
 It shows current temperature and humidity, optimal ranges, alerts for values outside the optimal range, historical chart data, recent readings, and a page with all readings.
 
@@ -25,7 +25,7 @@ cd frontend
 npm install
 ```
 
-This installs Vite and creates/updates `node_modules`.
+This installs React, Vite, and creates/updates `node_modules`.
 
 ## Run Locally
 
@@ -57,20 +57,68 @@ The production output is generated into:
 frontend/dist
 ```
 
-## Project Files
+## Project Structure
 
-- `index.html` - page structure
-- `styles.css` - layout and visual styling
-- `app.js` - rendering logic, chart, alerts, view switching
-- `data.js` - mock readings, optimal ranges, and future API loading
-- `package.json` - npm scripts and frontend dependencies
+```text
+frontend/
+  index.html
+  package.json
+  styles.css
+  src/
+    main.jsx
+    App.jsx
+    api/
+      measurements.js
+    components/
+      Alerts.jsx
+      ChartCard.jsx
+      HistoricalData.jsx
+      LineChart.jsx
+      MetricGrid.jsx
+      ReadingsPanel.jsx
+      ReadingsTable.jsx
+      Topbar.jsx
+      icons/
+    constants/
+      monitor.js
+    data/
+      mockReadings.js
+    hooks/
+      useMeasurements.js
+      useRoute.js
+      useTheme.js
+    pages/
+      AllReadings.jsx
+      Dashboard.jsx
+    utils/
+      chartDrawing.js
+      format.js
+      readings.js
+      status.js
+```
+
+Main responsibilities:
+
+- `index.html` - React mount point
+- `src/main.jsx` - React entry point
+- `src/App.jsx` - app composition and page selection
+- `src/pages` - dashboard and all-readings screens
+- `src/components` - reusable UI components
+- `src/hooks` - data loading, route state, and theme state
+- `src/api/measurements.js` - measurement API loading with mock fallback
+- `src/data/mockReadings.js` - local mock greenhouse measurements
+- `src/constants/monitor.js` - optimal ranges, metric config, chart config
+- `src/utils` - formatting, status logic, chart drawing, readings filtering
+- `styles.css` - global layout and visual styling
+
+`app.js` is no longer used. The frontend now runs through React files in `src/`.
 
 ## Mock Data
 
 Mock greenhouse readings are in:
 
 ```text
-frontend/data.js
+frontend/src/data/mockReadings.js
 ```
 
 The current optimal ranges are:
@@ -80,6 +128,12 @@ temperature: 18-28 C
 humidity: 50-80%
 ```
 
+Change optimal ranges in:
+
+```text
+frontend/src/constants/monitor.js
+```
+
 The app currently tries to load real measurements from:
 
 ```text
@@ -87,6 +141,15 @@ The app currently tries to load real measurements from:
 ```
 
 If the API is not available or returns no usable readings, it automatically falls back to mock data.
+
+## Pages
+
+The app has two client-side views:
+
+- Dashboard: `/`
+- All readings: `/readings`
+
+The old `?view=all` URL is still supported and redirects internally to the all-readings view.
 
 ## Useful Commands
 

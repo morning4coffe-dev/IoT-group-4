@@ -1,13 +1,3 @@
-export const OPTIMAL_RANGES = {
-  temperature: { min: 18, max: 28, unit: "C" },
-  humidity: { min: 50, max: 80, unit: "%" },
-};
-
-const API_CONFIG = {
-  listUrl: "/humigrow/measurement/list",
-  pageSize: 1000,
-};
-
 function hoursAgo(hours, minutes = 0) {
   const date = new Date();
   date.setHours(date.getHours() - hours);
@@ -16,7 +6,7 @@ function hoursAgo(hours, minutes = 0) {
   return date.toISOString();
 }
 
-const mockReadings = [
+export const mockReadings = [
   { id: "m-001", device: "greenhouse-01", sys_cts: hoursAgo(0, 4), temperature_c: 25.2, humidity_pct: 62.4 },
   { id: "m-002", device: "greenhouse-01", sys_cts: hoursAgo(1, 0), temperature_c: 24.7, humidity_pct: 64.1 },
   { id: "m-003", device: "greenhouse-01", sys_cts: hoursAgo(2, 0), temperature_c: 24.1, humidity_pct: 66.8 },
@@ -58,31 +48,3 @@ const mockReadings = [
   { id: "m-039", device: "greenhouse-01", sys_cts: hoursAgo(576, 0), temperature_c: 24.5, humidity_pct: 65.3 },
   { id: "m-040", device: "greenhouse-01", sys_cts: hoursAgo(648, 0), temperature_c: 27.9, humidity_pct: 57.7 },
 ];
-
-function normalizeReading(reading) {
-  return {
-    id: reading.id,
-    device: reading.device || reading.device_id || "greenhouse-01",
-    sys_cts: reading.sys_cts || reading.createdAt || reading.time,
-    temperature_c: Number(reading.temperature_c ?? reading.temperature),
-    humidity_pct: Number(reading.humidity_pct ?? reading.humidity),
-  };
-}
-
-export async function fetchReadings() {
-  try {
-    const response = await fetch(`${API_CONFIG.listUrl}?pageSize=${API_CONFIG.pageSize}`);
-    if (!response.ok) throw new Error(`API responded ${response.status}`);
-
-    const payload = await response.json();
-    const readings = (payload.itemList || payload.measurements || [])
-      .map(normalizeReading)
-      .filter((reading) => reading.sys_cts && Number.isFinite(reading.temperature_c) && Number.isFinite(reading.humidity_pct));
-
-    if (readings.length > 0) return readings;
-  } catch (error) {
-    console.info("Using mock greenhouse readings:", error.message);
-  }
-
-  return mockReadings.map(normalizeReading);
-}

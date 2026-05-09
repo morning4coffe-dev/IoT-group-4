@@ -72,6 +72,15 @@ a {
   font-size: 18px;
 }
 
+.brand-button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+}
+
 .brand-mark {
   display: grid;
   width: 32px;

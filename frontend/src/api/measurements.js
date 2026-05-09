@@ -1,7 +1,9 @@
 import { mockReadings } from "../data/mockReadings.js";
 
+const BASE_URL = import.meta.env.VITE_API_URL ?? "";
+
 const API_CONFIG = {
-  listUrl: "/humigrow/measurement/list",
+  listUrl: `${BASE_URL}/humigrow/measurement/list`,
   pageSize: 1000,
 };
 
